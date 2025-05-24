@@ -1,175 +1,123 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from "react";
 import {
   MapContainer,
   TileLayer,
   Marker,
   Popup,
   useMapEvents,
-  useMap,
-} from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
-import L from 'leaflet';
+} from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+import { db } from "./firebase";
+import {
+  collection,
+  addDoc,
+  getDocs,
+  onSnapshot,
+  deleteDoc,
+  doc,
+} from "firebase/firestore";
+import "./App.css";
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+  iconRetinaUrl:
+    "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
 });
 
+const toiletsCollection = collection(db, "toilets");
+
+function MapClickHandler({ onMapClick }) {
+  useMapEvents({
+    click(e) {
+      onMapClick(e.latlng);
+    },
+  });
+  return null;
+}
+
 function App() {
-  const [locations, setLocations] = useState(() => {
-    const saved = localStorage.getItem('toiletLocations');
-    return saved ? JSON.parse(saved) : [
-      {
-        lat: 10.3173,
-        lng: 123.9058,
-        name: 'Ayala Center Cebu',
-        hasToiletPaper: true,
-      }
-    ];
-  });
-
-  const [form, setForm] = useState({
-    name: '',
-    lat: '',
-    lng: '',
-    hasToiletPaper: true,
-  });
-
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setForm((prev) => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value,
-    }));
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const newLocation = {
-      name: form.name,
-      lat: parseFloat(form.lat),
-      lng: parseFloat(form.lng),
-      hasToiletPaper: form.hasToiletPaper,
-    };
-    const updated = [...locations, newLocation];
-    setLocations(updated);
-    setForm({ name: '', lat: '', lng: '', hasToiletPaper: true });
-    localStorage.setItem('toiletLocations', JSON.stringify(updated));
-  };
-
-  const deleteLocation = (index) => {
-    const updated = locations.filter((_, i) => i !== index);
-    setLocations(updated);
-    localStorage.setItem('toiletLocations', JSON.stringify(updated));
-  };
+  const [markers, setMarkers] = useState([]);
+  const [userLocation, setUserLocation] = useState(null);
 
   useEffect(() => {
-    localStorage.setItem('toiletLocations', JSON.stringify(locations));
-  }, [locations]);
-
-  const MapClickHandler = () => {
-    useMapEvents({
-      click(e) {
-        const { lat, lng } = e.latlng;
-        setForm((prev) => ({
-          ...prev,
-          lat: lat.toFixed(6),
-          lng: lng.toFixed(6),
-        }));
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setUserLocation([pos.coords.latitude, pos.coords.longitude]);
       },
+      (err) => {
+        console.error("現在地取得エラー", err);
+      }
+    );
+  }, []);
+
+  // 🔽 Firestore からデータ取得（リアルタイム）
+  useEffect(() => {
+    const unsubscribe = onSnapshot(toiletsCollection, (snapshot) => {
+      const data = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setMarkers(data);
     });
-    return null;
+    return () => unsubscribe(); // クリーンアップ
+  }, []);
+
+  // 🔼 Firestore に保存
+  const handleMapClick = async (latlng) => {
+    const confirm = window.confirm("この場所にトイレを追加しますか？");
+    if (!confirm) return;
+    try {
+      await addDoc(toiletsCollection, {
+        lat: latlng.lat,
+        lng: latlng.lng,
+        hasToiletPaper: true,
+        createdAt: new Date(),
+      });
+    } catch (e) {
+      console.error("保存に失敗しました", e);
+    }
   };
 
-  const CurrentLocationMarker = () => {
-    const [position, setPosition] = useState(null);
-    const map = useMap();
-
-    useEffect(() => {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          const { latitude, longitude } = pos.coords;
-          const latlng = [latitude, longitude];
-          setPosition(latlng);
-          map.setView(latlng, 16);
-        },
-        (err) => {
-          console.error('位置情報が取得できませんでした:', err);
-        }
-      );
-    }, [map]);
-
-    return position ? (
-      <Marker
-        position={position}
-        icon={L.divIcon({
-          className: 'current-location-icon',
-          html:
-            '<div style="background: blue; width: 12px; height: 12px; border-radius: 50%;"></div>',
-          iconSize: [12, 12],
-        })}
-      >
-        <Popup>あなたの現在地</Popup>
-      </Marker>
-    ) : null;
+  const handleDelete = async (id) => {
+    const ok = window.confirm("このマーカーを削除しますか？");
+    if (!ok) return;
+    try {
+      await deleteDoc(doc(db, "toilets", id));
+    } catch (e) {
+      console.error("削除に失敗しました", e);
+    }
   };
 
   return (
-    <div style={{ display: 'flex', height: '100vh' }}>
-      <div style={{ flex: 1 }}>
-        <MapContainer center={[10.3157, 123.8854]} zoom={13} style={{ height: '100%' }}>
-          <TileLayer
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            attribution="&copy; OpenStreetMap contributors"
-          />
-          <MapClickHandler />
-          <CurrentLocationMarker />
-          {locations.map((loc, index) => (
-            <Marker key={index} position={[loc.lat, loc.lng]}>
-              <Popup>
-                <strong>{loc.name}</strong><br />
-                {loc.hasToiletPaper ? '🧻 トイレットペーパーあり' : '❌ なし'}
-                <br />
-                <button onClick={() => deleteLocation(index)}>🗑 削除</button>
-              </Popup>
-            </Marker>
-          ))}
-        </MapContainer>
-      </div>
-
-      <div style={{ width: '300px', padding: '1rem', background: '#f4f4f4' }}>
-        <h2>トイレを追加</h2>
-        <form onSubmit={handleSubmit}>
-          <label>
-            名前：
-            <input type="text" name="name" value={form.name} onChange={handleChange} required />
-          </label>
-          <br />
-          <label>
-            緯度：
-            <input type="text" name="lat" value={form.lat} onChange={handleChange} required />
-          </label>
-          <br />
-          <label>
-            経度：
-            <input type="text" name="lng" value={form.lng} onChange={handleChange} required />
-          </label>
-          <br />
-          <label>
-            トイレットペーパーあり：
-            <input
-              type="checkbox"
-              name="hasToiletPaper"
-              checked={form.hasToiletPaper}
-              onChange={handleChange}
-            />
-          </label>
-          <br />
-          <button type="submit">追加</button>
-        </form>
-      </div>
+    <div className="App">
+      <MapContainer
+        center={userLocation || [10.3157, 123.8854]}
+        zoom={13}
+        scrollWheelZoom
+        className="map-container"
+      >
+        <TileLayer
+          attribution="&copy; OpenStreetMap contributors"
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        />
+        <MapClickHandler onMapClick={handleMapClick} />
+        {userLocation && (
+          <Marker position={userLocation}>
+            <Popup>あなたの現在地</Popup>
+          </Marker>
+        )}
+        {markers.map((marker) => (
+          <Marker key={marker.id} position={[marker.lat, marker.lng]}>
+            <Popup>
+              トイレットペーパーありのトイレ<br />
+              <button onClick={() => handleDelete(marker.id)}>削除</button>
+            </Popup>
+          </Marker>
+        ))}
+      </MapContainer>
     </div>
   );
 }
