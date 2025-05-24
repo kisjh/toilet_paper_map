@@ -7,7 +7,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyDTpULY9e3v4jooYuMNVT3yBeoxHX1Vnig",
   authDomain: "toiletpapermap.firebaseapp.com",
   projectId: "toiletpapermap",
-  storageBucket: "toiletpapermap.firebasestorage.app",
+  storageBucket: "toiletpapermap.appspot.com",
   messagingSenderId: "815418952735",
   appId: "1:815418952735:web:95d3406530c7dfd4e0192a"
 };
