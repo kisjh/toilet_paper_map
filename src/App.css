@@ -1,0 +1,35 @@
+/* src/App.css */
+.App {
+  text-align: center;
+  font-family: sans-serif;
+  padding: 1rem;
+}
+
+h1 {
+  margin-bottom: 1rem;
+}
+
+.toilet-form {
+  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: start;
+  max-width: 300px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.toilet-form input[type="text"] {
+  padding: 0.5rem;
+  width: 100%;
+}
+
+.toilet-form button {
+  padding: 0.5rem 1rem;
+  background: #1976d2;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
