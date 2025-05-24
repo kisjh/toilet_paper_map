@@ -1,0 +1,15 @@
+{
+  "files": {
+    "main.css": "/toilet_paper_map/static/css/main.323d7611.css",
+    "main.js": "/toilet_paper_map/static/js/main.294b6193.js",
+    "static/js/453.93cf5688.chunk.js": "/toilet_paper_map/static/js/453.93cf5688.chunk.js",
+    "index.html": "/toilet_paper_map/index.html",
+    "main.323d7611.css.map": "/toilet_paper_map/static/css/main.323d7611.css.map",
+    "main.294b6193.js.map": "/toilet_paper_map/static/js/main.294b6193.js.map",
+    "453.93cf5688.chunk.js.map": "/toilet_paper_map/static/js/453.93cf5688.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.323d7611.css",
+    "static/js/main.294b6193.js"
+  ]
+}
