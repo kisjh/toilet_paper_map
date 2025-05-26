@@ -9,10 +9,11 @@ import {
 } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
+import './App.css';
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+  iconRetinaUrl:  process.env.PUBLIC_URL + '/toileticon.png',
   iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
 });
@@ -26,7 +27,7 @@ function App() {
         lng: 123.9058,
         name: 'Ayala Center Cebu',
         hasToiletPaper: true,
-      }
+      },
     ];
   });
 
@@ -106,8 +107,7 @@ function App() {
         position={position}
         icon={L.divIcon({
           className: 'current-location-icon',
-          html:
-            '<div style="background: blue; width: 12px; height: 12px; border-radius: 50%;"></div>',
+          html: '<div style="background: #004fff; width: 12px; height: 12px; border-radius: 50%; box-shadow: 2px -2px 4px gray;"></div>',
           iconSize: [12, 12],
         })}
       >
@@ -117,8 +117,8 @@ function App() {
   };
 
   return (
-    <div style={{ display: 'flex', height: '100vh' }}>
-      <div style={{ flex: 1 }}>
+    <div className="App">
+      <div className="map-container">
         <MapContainer center={[10.3157, 123.8854]} zoom={13} style={{ height: '100%' }}>
           <TileLayer
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -129,7 +129,8 @@ function App() {
           {locations.map((loc, index) => (
             <Marker key={index} position={[loc.lat, loc.lng]}>
               <Popup>
-                <strong>{loc.name}</strong><br />
+                <strong>{loc.name}</strong>
+                <br />
                 {loc.hasToiletPaper ? '🧻 トイレットペーパーあり' : '❌ なし'}
                 <br />
                 <button onClick={() => deleteLocation(index)}>🗑 削除</button>
@@ -139,35 +140,31 @@ function App() {
         </MapContainer>
       </div>
 
-      <div style={{ width: '300px', padding: '1rem', background: '#f4f4f4' }}>
+      <div className="form-container">
         <h2>トイレを追加</h2>
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} className="toilet-form">
           <label>
-            名前：
-            <input type="text" name="name" value={form.name} onChange={handleChange} required />
+            {/* 名前： */}
+            <input type="text" name="name" placeholder="名前" value={form.name} onChange={handleChange} required />
           </label>
-          <br />
           <label>
-            緯度：
-            <input type="text" name="lat" value={form.lat} onChange={handleChange} required />
+            {/* 緯度： */}
+            <input type="text" name="lat" placeholder="緯度" value={form.lat} onChange={handleChange} required />
           </label>
-          <br />
           <label>
-            経度：
-            <input type="text" name="lng" value={form.lng} onChange={handleChange} required />
+            {/* 経度： */}
+            <input type="text" name="lng" placeholder="経度" value={form.lng} onChange={handleChange} required />
           </label>
-          <br />
           <label>
-            トイレットペーパーあり：
             <input
               type="checkbox"
               name="hasToiletPaper"
               checked={form.hasToiletPaper}
               onChange={handleChange}
             />
+            トイレットペーパーあり
           </label>
-          <br />
-          <button type="submit">追加</button>
+          <button type="submit">＋ 追加</button>
         </form>
       </div>
     </div>
