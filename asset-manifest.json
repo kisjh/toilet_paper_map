@@ -1,15 +1,15 @@
 {
   "files": {
     "main.css": "/toilet_paper_map/static/css/main.afeeac3d.css",
-    "main.js": "/toilet_paper_map/static/js/main.373e1559.js",
+    "main.js": "/toilet_paper_map/static/js/main.886f3332.js",
     "static/js/453.93cf5688.chunk.js": "/toilet_paper_map/static/js/453.93cf5688.chunk.js",
     "index.html": "/toilet_paper_map/index.html",
     "main.afeeac3d.css.map": "/toilet_paper_map/static/css/main.afeeac3d.css.map",
-    "main.373e1559.js.map": "/toilet_paper_map/static/js/main.373e1559.js.map",
+    "main.886f3332.js.map": "/toilet_paper_map/static/js/main.886f3332.js.map",
     "453.93cf5688.chunk.js.map": "/toilet_paper_map/static/js/453.93cf5688.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.afeeac3d.css",
-    "static/js/main.373e1559.js"
+    "static/js/main.886f3332.js"
   ]
 }
