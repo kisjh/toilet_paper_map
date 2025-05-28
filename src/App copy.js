@@ -18,17 +18,22 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
 });
 
+const toiletIconYes = L.icon({
+  iconUrl: process.env.PUBLIC_URL + '/toilet_yes.svg',
+  iconSize: [30, 30],
+  iconAnchor: [15, 30],
+});
+
+const toiletIconNo = L.icon({
+  iconUrl: process.env.PUBLIC_URL + '/toilet_no.svg',
+  iconSize: [30, 30],
+  iconAnchor: [15, 30],
+});
+
 function App() {
   const [locations, setLocations] = useState(() => {
     const saved = localStorage.getItem('toiletLocations');
-    return saved ? JSON.parse(saved) : [
-      {
-        lat: 10.3173,
-        lng: 123.9058,
-        name: 'Ayala Center Cebu',
-        hasToiletPaper: true,
-      },
-    ];
+    return saved ? JSON.parse(saved) : [];
   });
 
   const [form, setForm] = useState({
@@ -38,7 +43,8 @@ function App() {
     hasToiletPaper: true,
   });
 
-  const [showForm, setShowForm] = useState(false);
+  const [previewLocation, setPreviewLocation] = useState(null);
+  const [showModal, setShowModal] = useState(false);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -59,6 +65,8 @@ function App() {
     const updated = [...locations, newLocation];
     setLocations(updated);
     setForm({ name: '', lat: '', lng: '', hasToiletPaper: true });
+    setPreviewLocation(null);
+    setShowModal(false);
     localStorage.setItem('toiletLocations', JSON.stringify(updated));
   };
 
@@ -76,11 +84,13 @@ function App() {
     useMapEvents({
       click(e) {
         const { lat, lng } = e.latlng;
+        setPreviewLocation({ lat, lng });
         setForm((prev) => ({
           ...prev,
           lat: lat.toFixed(6),
           lng: lng.toFixed(6),
         }));
+        setShowModal(true);
       },
     });
     return null;
@@ -109,7 +119,7 @@ function App() {
         position={position}
         icon={L.divIcon({
           className: 'current-location-icon',
-          html: '<div style="background: blue; width: 12px; height: 12px; border-radius: 50%;"></div>',
+          html: '<div style=" width: 12px; height: 12px; border-radius: 50%;"></div>',
           iconSize: [12, 12],
         })}
       >
@@ -129,53 +139,60 @@ function App() {
           <MapClickHandler />
           <CurrentLocationMarker />
           {locations.map((loc, index) => (
-            <Marker key={index} position={[loc.lat, loc.lng]}>
+            <Marker
+              key={index}
+              position={[loc.lat, loc.lng]}
+              icon={loc.hasToiletPaper ? toiletIconYes : toiletIconNo}
+            >
               <Popup>
                 <strong>{loc.name}</strong>
                 <br />
-                {loc.hasToiletPaper ? '🧻 トイレットペーパーあり' : '❌ なし'}
+                {loc.hasToiletPaper ? 'トイパあり🧻' : 'トイパなし❌'}
                 <br />
-                <button onClick={() => deleteLocation(index)}>🗑 削除</button>
+                <button onClick={() => deleteLocation(index)}>🗑削除</button>
               </Popup>
             </Marker>
           ))}
+          {previewLocation && (
+            <Marker position={[previewLocation.lat, previewLocation.lng]}>
+              <Popup>新しいトイレの場所（入力して保存）</Popup>
+            </Marker>
+          )}
         </MapContainer>
       </div>
 
-      <button
-        onClick={() => setShowForm(!showForm)}
-        className="toggle-form-button"
-      >
-        {showForm ? 'フォームを閉じる' : '＋トイレを追加'}
-      </button>
-
-      {showForm && (
-        <div className="form-container">
-          <h2>トイレを追加</h2>
-          <form onSubmit={handleSubmit} className="toilet-form">
-            <label>
-              名前：
-              <input type="text" name="name" value={form.name} onChange={handleChange} required />
-            </label>
-            <label>
-              緯度：
-              <input type="text" name="lat" value={form.lat} onChange={handleChange} required />
-            </label>
-            <label>
-              経度：
-              <input type="text" name="lng" value={form.lng} onChange={handleChange} required />
-            </label>
-            <label>
-              <input
-                type="checkbox"
-                name="hasToiletPaper"
-                checked={form.hasToiletPaper}
-                onChange={handleChange}
-              />
-              トイレットペーパーあり
-            </label>
-            <button type="submit">➕ 追加</button>
-          </form>
+      {showModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h2>トイレを見つけた！</h2>
+            <form onSubmit={handleSubmit} className="toilet-form">
+              <label>
+                名前：
+                <input type="text" name="name" placeholder="○○カフェ2階" value={form.name} onChange={handleChange} required />
+              </label>
+              <input type="hidden" name="lat" value={form.lat} />
+              <input type="hidden" name="lng" value={form.lng} />
+              <label>
+                <input
+                  type="checkbox"
+                  name="hasToiletPaper"
+                  checked={form.hasToiletPaper}
+                  onChange={handleChange}
+                />
+                トイレットペーパーあり🧻
+              </label>
+              <div className="modal-buttons">
+                <button type="button" onClick={() => {
+                  setShowModal(false);
+                  setPreviewLocation(null);
+                  setForm({ name: '', lat: '', lng: '', hasToiletPaper: true });
+                }}>
+                  キャンセル
+                </button>
+                <button type="submit">＋追加する</button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>
