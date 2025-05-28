@@ -7,7 +7,7 @@ import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import './App.css';
 import { db } from './firebase';
-import { collection, addDoc, getDocs } from 'firebase/firestore';
+import { collection, addDoc, onSnapshot } from 'firebase/firestore';
 
 const toiletIconYes = L.icon({
   iconUrl: process.env.PUBLIC_URL + '/toilet_yes.svg',
@@ -26,14 +26,13 @@ function App() {
   const [previewLocation, setPreviewLocation] = useState(null);
   const [showModal, setShowModal] = useState(false);
 
-  // Firestoreからデータ取得
+  // Firestoreからリアルタイム取得
   useEffect(() => {
-    const fetchLocations = async () => {
-      const snapshot = await getDocs(collection(db, 'toilets'));
+    const unsubscribe = onSnapshot(collection(db, 'toilets'), (snapshot) => {
       const data = snapshot.docs.map(doc => doc.data());
       setLocations(data);
-    };
-    fetchLocations();
+    });
+    return () => unsubscribe();
   }, []);
 
   const handleChange = (e) => {
@@ -50,7 +49,6 @@ function App() {
       hasToiletPaper: form.hasToiletPaper,
     };
     await addDoc(collection(db, 'toilets'), newLocation);
-    setLocations(prev => [...prev, newLocation]);
     setForm({ name: '', lat: '', lng: '', hasToiletPaper: true });
     setPreviewLocation(null);
     setShowModal(false);
