@@ -11,12 +11,12 @@ import { collection, addDoc, onSnapshot } from 'firebase/firestore';
 
 const toiletIconYes = L.icon({
   iconUrl: process.env.PUBLIC_URL + '/toilet_yes.svg',
-  iconSize: [30, 30],
+  iconSize: [40, 40],
   iconAnchor: [15, 30],
 });
 const toiletIconNo = L.icon({
   iconUrl: process.env.PUBLIC_URL + '/toilet_no.svg',
-  iconSize: [30, 30],
+  iconSize: [40, 40],
   iconAnchor: [15, 30],
 });
 
@@ -146,7 +146,7 @@ function App() {
             <form onSubmit={handleSubmit} className="toilet-form">
               <label>
                 名前：
-                <input type="text" name="name" value={form.name} onChange={handleChange} required />
+                <input type="text" name="name" placeholder="○○カフェ2階" value={form.name} onChange={handleChange} required />
               </label>
               <input type="hidden" name="lat" value={form.lat} />
               <input type="hidden" name="lng" value={form.lng} />
