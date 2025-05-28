@@ -70,6 +70,12 @@ function App() {
     localStorage.setItem('toiletLocations', JSON.stringify(updated));
   };
 
+  const handleCancel = () => {
+    setShowModal(false);
+    setPreviewLocation(null);
+    setForm({ name: '', lat: '', lng: '', hasToiletPaper: true });
+  };
+
   const deleteLocation = (index) => {
     const updated = locations.filter((_, i) => i !== index);
     setLocations(updated);
@@ -119,7 +125,7 @@ function App() {
         position={position}
         icon={L.divIcon({
           className: 'current-location-icon',
-          html: '<div style=" width: 12px; height: 12px; border-radius: 50%;"></div>',
+          html: '<div style="background: blue; width: 12px; height: 12px; border-radius: 50%;"></div>',
           iconSize: [12, 12],
         })}
       >
@@ -147,9 +153,9 @@ function App() {
               <Popup>
                 <strong>{loc.name}</strong>
                 <br />
-                {loc.hasToiletPaper ? 'トイパあり🧻' : 'トイパなし❌'}
+                {loc.hasToiletPaper ? '🧻 トイレットペーパーあり' : '❌ なし'}
                 <br />
-                <button onClick={() => deleteLocation(index)}>🗑削除</button>
+                <button onClick={() => deleteLocation(index)}>🗑 削除</button>
               </Popup>
             </Marker>
           ))}
@@ -164,7 +170,7 @@ function App() {
       {showModal && (
         <div className="modal-overlay">
           <div className="modal-content">
-            <h2>トイレを見つけた！</h2>
+            <h2>トイレを追加</h2>
             <form onSubmit={handleSubmit} className="toilet-form">
               <label>
                 名前：
@@ -179,17 +185,11 @@ function App() {
                   checked={form.hasToiletPaper}
                   onChange={handleChange}
                 />
-                トイレットペーパーあり🧻
+                トイレットペーパーあり
               </label>
               <div className="modal-buttons">
-                <button type="button" onClick={() => {
-                  setShowModal(false);
-                  setPreviewLocation(null);
-                  setForm({ name: '', lat: '', lng: '', hasToiletPaper: true });
-                }}>
-                  キャンセル
-                </button>
-                <button type="submit">＋追加する</button>
+                <button type="button" onClick={handleCancel}>キャンセル</button>
+                <button type="submit">➕ 追加</button>
               </div>
             </form>
           </div>
