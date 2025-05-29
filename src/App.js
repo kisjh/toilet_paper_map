@@ -7,7 +7,7 @@ import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import './App.css';
 import { db } from './firebase';
-import { collection, addDoc, onSnapshot } from 'firebase/firestore';
+import { collection, addDoc, onSnapshot, deleteDoc, doc } from 'firebase/firestore';
 
 const toiletIconYes = L.icon({
   iconUrl: process.env.PUBLIC_URL + '/toilet_yes.svg',
@@ -25,11 +25,12 @@ function App() {
   const [form, setForm] = useState({ name: '', lat: '', lng: '', hasToiletPaper: true });
   const [previewLocation, setPreviewLocation] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [showGuide, setShowGuide] = useState(() => !localStorage.getItem('guideShown'));
 
   // Firestoreからリアルタイム取得
   useEffect(() => {
     const unsubscribe = onSnapshot(collection(db, 'toilets'), (snapshot) => {
-      const data = snapshot.docs.map(doc => doc.data());
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setLocations(data);
     });
     return () => unsubscribe();
@@ -52,6 +53,10 @@ function App() {
     setForm({ name: '', lat: '', lng: '', hasToiletPaper: true });
     setPreviewLocation(null);
     setShowModal(false);
+  };
+
+  const handleDelete = async (id) => {
+    deleteDoc(doc(db, 'toilets', id));
   };
 
   const handleCancel = () => {
@@ -108,8 +113,24 @@ function App() {
     ) : null;
   };
 
+  const handleGuideClose = () => {
+    localStorage.setItem('guideShown', 'true');
+    setShowGuide(false);
+  };
+
   return (
     <div className="App">
+      {showGuide && (
+        <div className="guide-overlay">
+          <div className="guide-content">
+            <h2> セブ島トイレットペーパーマップ</h2>
+            <p> ⚪︎トイパの有無をみんなで共有しよう</p>
+            <p> ⚪︎トイレを見つけた場所をタップ！地図に追加しよう🧻</p>
+            <button onClick={handleGuideClose}>はじめる</button>
+          </div>
+        </div>
+      )}
+
       <div className="map-container">
         <MapContainer center={[10.3157, 123.8854]} zoom={13} style={{ height: '100%' }}>
           <TileLayer
@@ -120,14 +141,30 @@ function App() {
           <CurrentLocationMarker />
           {locations.map((loc, index) => (
             <Marker
-              key={index}
+              key={loc.id || index}
               position={[loc.lat, loc.lng]}
               icon={loc.hasToiletPaper ? toiletIconYes : toiletIconNo}
             >
               <Popup>
                 <strong>{loc.name}</strong>
                 <br />
-                {loc.hasToiletPaper ? '🧻 トイレットペーパーあり' : '❌ なし'}
+                {loc.hasToiletPaper ? '🧻 トイパあり' : '❌ トイパなし'}
+                <br />
+                <button
+                  onClick={() => handleDelete(loc.id)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: 0,
+                    fontSize: '8px',
+                    color: '#aaa',
+                    float: 'right'
+                  }}
+                  title="削除"
+                >
+                  削除する
+                </button>
               </Popup>
             </Marker>
           ))}
@@ -157,7 +194,7 @@ function App() {
                   checked={form.hasToiletPaper}
                   onChange={handleChange}
                 />
-                トイレットペーパーあり🧻
+                トイレットペーパあり🧻
               </label>
               <div className="modal-buttons">
                 <button type="button" onClick={handleCancel}>キャンセル</button>
